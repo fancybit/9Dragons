@@ -1,0 +1,18 @@
+{
+  "novel": {
+    "name": "九龙修真记",
+    "author": "九王爷",
+    "category": "玄幻",
+    "description": "大明万历年间，九王爷朱常澜从闲散王爷觉醒为雪灵猫后裔玄玉真人，开启九命历练的故事。"
+  },
+  "directories": {
+    "chapterPath": "../../md/章节/正传",
+    "updateLogPath": "./update-log.json",
+    "configPath": "./config.json",
+    "exportPath": "./exports"
+  },
+  "fanqie": {
+    "writerId": "",
+    "bookId": ""
+  }
+}
