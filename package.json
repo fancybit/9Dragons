@@ -1,5 +1,26 @@
 {
+  "name": "qq-space-exporter",
+  "version": "1.0.0",
+  "description": "QQ空间说说提取插件，用于从QQ空间抓取说说内容并保存为Markdown文件",
+  "main": "src/index.js",
+  "bin": {
+    "qq-space-exporter": "src/index.js"
+  },
+  "scripts": {
+    "start": "node src/index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "qq-space",
+    "exporter",
+    "markdown",
+    "crawler"
+  ],
+  "author": "",
+  "license": "MIT",
   "dependencies": {
-    "markdown-it": "^14.1.0"
+    "commander": "^14.0.2",
+    "markdown-it": "^14.1.0",
+    "puppeteer": "^24.34.0"
   }
 }
