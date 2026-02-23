@@ -1,6 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const markdownit = require('markdown-it');
+const { generateImage } = require('./utils/image-generator');
 
 // 初始化markdown-it实例
 const md = markdownit({
@@ -13,8 +14,51 @@ const md = markdownit({
 const srcDir = path.join(__dirname, 'md');
 const destDir = path.join(__dirname, 'html');
 
-// 遍历目录并转换文件
-function convertMdToHtml(src, dest) {
+/**
+ * 预处理Markdown内容，生成图像
+ * @param {string} content - Markdown内容
+ * @returns {Promise<string>} - 预处理后的Markdown内容
+ */
+async function preprocessMarkdown(content) {
+    // 匹配图像生成标记，格式：![generate](描述文本) 或 ![generate:api](描述文本)
+    const generateImageRegex = /!\[(generate(:\w+)?)\]\(([^)]+)\)/g;
+    let match;
+    let processedContent = content;
+    
+    while ((match = generateImageRegex.exec(content)) !== null) {
+        const fullMatch = match[0];
+        const mode = match[2] ? match[2].substring(1) : 'local'; // 提取模式：local 或 api
+        const prompt = match[3];
+        
+        try {
+            // 生成图像
+            console.log(`正在生成图像：${prompt} (模式：${mode})`);
+            const imagePath = await generateImage(prompt, {}, mode);
+            
+            // 计算相对路径
+            const relativePath = path.relative(path.dirname(destDir), imagePath);
+            
+            // 替换标记为实际图像引用
+            processedContent = processedContent.replace(
+                fullMatch,
+                `![${prompt}](${relativePath})`
+            );
+        } catch (error) {
+            console.error(`生成图像失败（${prompt}）：`, error);
+            // 生成失败时，保留原始标记
+        }
+    }
+    
+    return processedContent;
+}
+
+/**
+ * 遍历目录并转换文件
+ * @param {string} src - 源目录
+ * @param {string} dest - 目标目录
+ * @returns {Promise<void>}
+ */
+async function convertMdToHtml(src, dest) {
     // 确保目标目录存在
     if (!fs.existsSync(dest)) {
         fs.mkdirSync(dest, { recursive: true });
@@ -23,21 +67,27 @@ function convertMdToHtml(src, dest) {
     // 读取源目录中的文件
     const files = fs.readdirSync(src);
 
-    files.forEach(file => {
+    for (const file of files) {
         const srcPath = path.join(src, file);
         const destPath = path.join(dest, file.replace('.md', '.html'));
 
         // 检查是否是目录
         if (fs.statSync(srcPath).isDirectory()) {
             // 递归处理子目录
-            convertMdToHtml(srcPath, destPath);
+            await convertMdToHtml(srcPath, destPath);
         } else if (file.endsWith('.md')) {
-            // 转换markdown文件为html
-            const mdContent = fs.readFileSync(srcPath, 'utf8');
-            const htmlContent = md.render(mdContent);
-            
-            // 创建完整的html文件
-            const fullHtml = `<!DOCTYPE html>
+            try {
+                // 读取markdown文件
+                const mdContent = fs.readFileSync(srcPath, 'utf8');
+                
+                // 预处理Markdown内容，生成图像
+                const processedContent = await preprocessMarkdown(mdContent);
+                
+                // 转换为html
+                const htmlContent = md.render(processedContent);
+                
+                // 创建完整的html文件
+                const fullHtml = `<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
@@ -122,11 +172,24 @@ function convertMdToHtml(src, dest) {
             // 写入html文件
             fs.writeFileSync(destPath, fullHtml, 'utf8');
             console.log(`转换完成: ${srcPath} -> ${destPath}`);
+        } catch (error) {
+            console.error(`处理文件失败：${srcPath}`, error);
         }
-    });
+    }
+}
+
+/**
+ * 开始转换
+ */
+async function startConversion() {
+    console.log('开始转换markdown文件为html...');
+    try {
+        await convertMdToHtml(srcDir, destDir);
+        console.log('转换完成！所有markdown文件已转换为html格式。');
+    } catch (error) {
+        console.error('转换过程中发生错误：', error);
+    }
 }
 
 // 开始转换
-console.log('开始转换markdown文件为html...');
-convertMdToHtml(srcDir, destDir);
-console.log('转换完成！所有markdown文件已转换为html格式。');
+startConversion();

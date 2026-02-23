@@ -1,14 +1,37 @@
-# QQ空间说说提取插件
+# 九龙修真记项目
 
-一个用于从QQ空间抓取说说内容并保存为Markdown文件的命令行工具。
+一个包含小说内容、设定和工具的综合性项目。
+
+## 项目结构
+
+```
+九龙修真记/
+├── config/              # 配置文件
+│   └── image-generator.js  # 图像生成配置
+├── html/                # 生成的HTML文件
+├── img/                 # 图像文件
+│   └── generated/       # 生成的图像
+├── md/                  # Markdown文件
+│   ├── 章节/            # 小说章节
+│   └── 设定/            # 小说设定
+├── src/                 # 源代码
+├── test/                # 测试文件
+├── tools/               # 工具脚本
+├── utils/               # 工具模块
+│   └── image-generator.js  # 图像生成模块
+├── config/              # 配置文件
+├── md-to-html.js        # Markdown转HTML脚本
+├── makehtml.bat         # 构建批处理文件
+├── package.json         # 项目配置
+└── README.md            # 使用说明
+```
 
 ## 功能特性
 
-- 支持扫码登录QQ空间
-- 自动抓取说说内容，包括文本、图片和点赞数
-- 支持按日期范围筛选
-- 将提取的内容转换为格式化的Markdown文件
-- 提供友好的命令行界面
+- **Markdown转HTML**：将小说章节和设定转换为HTML格式
+- **图像生成**：集成Stable Diffusion和豆包API，支持根据文本描述生成图像
+- **缓存机制**：优化图像生成过程，避免重复生成相同内容
+- **错误处理**：完善的错误处理和重试机制，提高可靠性
 
 ## 安装
 
@@ -16,6 +39,8 @@
 
 - Node.js 14.0.0 或更高版本
 - npm 或 yarn 包管理器
+- （可选）本地Stable Diffusion服务，用于本地图像生成
+- （可选）豆包API密钥，用于API图像生成
 
 ### 安装步骤
 
@@ -23,7 +48,7 @@
 
 2. 进入项目目录：
    ```bash
-   cd qq-space-exporter
+   cd 九龙修真记
    ```
 
 3. 安装依赖：
@@ -31,127 +56,147 @@
    npm install
    ```
 
-   如果遇到Puppeteer安装问题，可以尝试跳过Chrome下载：
-   ```bash
-   PUPPETEER_SKIP_DOWNLOAD=true npm install
-   ```
+## 图像生成功能
 
-## 使用方法
+本项目集成了图像生成功能，支持两种模式：
 
-### 基本用法
+1. **本地ComfyUI**：使用本地部署的ComfyUI服务生成图像
+2. **豆包API**：使用豆包的图像生成API生成图像
 
-直接运行命令，使用默认配置：
+### 配置
+
+1. **本地ComfyUI配置**：
+   - 修改 `config/image-generator.js` 文件中的 `local` 部分
+   - 确保 `baseUrl` 指向正确的本地ComfyUI服务地址（默认：http://localhost:8188）
+   - 检查 `comfyui` 部分的配置，确保路径正确：
+     ```javascript
+     comfyui: {
+       path: 'T:\\AI\\comfyui-aki',
+       startScript: 'run_nvidia_gpu.bat', // 根据您的GPU类型选择正确的启动脚本
+       note: '本机模式时请先启动ComfyUI来生成图'
+     }
+     ```
+
+2. **豆包API配置**：
+   - 修改 `config/image-generator.js` 文件中的 `api` 部分
+   - 将 `apiKey` 设置为您的豆包API密钥
+
+### 使用方法
+
+#### 1. 启动ComfyUI
+
+在使用本地模式生成图像前，请先启动ComfyUI：
+
+1. **打开ComfyUI目录**：
+   - 进入 `T:\AI\comfyui-aki` 目录
+
+2. **运行启动脚本**：
+   - 双击运行 `run_nvidia_gpu.bat` 文件（根据您的GPU类型选择正确的启动脚本）
+   - 等待命令行窗口加载完成，直到看到类似以下信息：
+     ```
+     ComfyUI server started at http://127.0.0.1:8188
+     ```
+
+3. **验证服务是否运行**：
+   - 打开浏览器，访问 `http://localhost:8188`
+   - 如果看到ComfyUI的Web界面，说明服务已成功启动
+
+#### 2. 在Markdown文件中使用图像生成语法
+
+在Markdown文件中，使用以下语法生成图像：
+
+##### 本地ComfyUI模式
+
+```markdown
+![generate](图像描述)
+```
+
+例如：
+```markdown
+![generate](明朝王爷穿着华丽的明黄色龙袍，坐在王府花园的凉亭中，手持折扇，神态悠闲，周围有仆人伺候)
+```
+
+##### 豆包API模式
+
+```markdown
+![generate:api](图像描述)
+```
+
+例如：
+```markdown
+![generate:api](赛博朋克风格的未来都市夜景，高楼大厦鳞次栉比，霓虹灯闪烁，空中有飞行汽车穿梭)
+```
+
+### 生成流程
+
+1. **启动ComfyUI**：（仅本地模式需要）
+   - 按照上述步骤启动ComfyUI服务
+
+2. **运行转换脚本**：
+   - 运行 `makehtml.bat` 批处理文件
+   - 或直接运行 `node md-to-html.js`
+
+3. **图像生成**：
+   - 脚本会扫描所有Markdown文件，识别图像生成标记
+   - 根据标记指定的模式，调用相应的图像生成服务
+   - 生成的图像会保存到 `img/generated` 目录
+
+4. **HTML转换**：
+   - Markdown文件会被转换为HTML文件
+   - 生成的图像会自动嵌入到HTML文件中
+
+### 注意事项
+
+1. **本地ComfyUI**：
+   - 需要先启动本地ComfyUI服务
+   - 生成速度取决于您的硬件配置
+   - ComfyUI默认端口为8188，与我们配置文件中的设置一致
+
+2. **豆包API**：
+   - 需要有效的API密钥
+   - 可能会产生API调用费用
+   - 生成速度取决于网络状况和API响应速度
+
+3. **图像描述**：
+   - 详细的描述会生成更符合预期的图像
+   - 对于本地ComfyUI，建议使用英文描述以获得更好的效果
+   - 对于豆包API，可以使用中文描述
+
+4. **缓存机制**：
+   - 相同的描述会使用缓存，避免重复生成
+   - 缓存文件存储在 `cache/image-generator` 目录
+
+5. **ComfyUI特殊注意事项**：
+   - ComfyUI使用基于工作流的API，与Stable Diffusion Web UI的API不同
+   - 默认工作流使用 `v1-5-pruned.safetensors` 模型，您可以根据需要修改配置
+   - ComfyUI会将图像保存到其 `output` 目录，同时我们的脚本也会将图像复制到 `img/generated` 目录
+
+## 构建HTML
+
+运行以下命令将Markdown文件转换为HTML文件：
 
 ```bash
-node src/index.js
+# Windows
+makehtml.bat
+
+# 或直接运行
+node md-to-html.js
 ```
 
-或使用全局命令（如果已链接）：
-
-```bash
-qq-space-exporter
-```
-
-### 命令行选项
-
-```
-Usage: qq-space-exporter [options]
-
-QQ空间说说提取插件，用于从QQ空间抓取说说内容并保存为Markdown文件
-
-Options:
-  -V, --version           output the version number
-  -o, --output <path>     输出文件路径 (default: "./qq-space-notes.md")
-  -s, --start-date <date> 开始日期 (YYYY-MM-DD)
-  -e, --end-date <date>   结束日期 (YYYY-MM-DD)
-  --headless              无头模式运行（不显示浏览器窗口） (default: false)
-  -h, --help              display help for command
-```
-
-### 示例
-
-1. 指定输出文件路径：
-   ```bash
-   node src/index.js --output ./output/my-notes.md
-   ```
-
-2. 按日期范围筛选：
-   ```bash
-   node src/index.js --start-date 2024-01-01 --end-date 2024-12-31
-   ```
-
-3. 使用无头模式：
-   ```bash
-   node src/index.js --headless
-   ```
-
-## 工作流程
-
-1. 启动浏览器并打开QQ空间登录页面
-2. 显示二维码供用户扫描登录
-3. 登录成功后，自动进入说说页面
-4. 滚动加载更多说说内容
-5. 提取每条说说的发布时间、内容、图片和点赞数
-6. 按日期范围筛选（如果指定了日期）
-7. 将提取的内容转换为Markdown格式
-8. 保存到指定的文件中
-
-## 项目结构
-
-```
-qq-space-exporter/
-├── src/
-│   ├── cli.js          # 命令行参数解析
-│   ├── crawler.js      # 说说内容抓取
-│   ├── index.js        # 主入口文件
-│   ├── login.js        # 扫码登录功能
-│   ├── markdown.js     # Markdown转换
-│   └── saver.js        # 文件保存
-├── test/
-│   └── basic-test.js   # 基本功能测试
-├── package.json        # 项目配置
-└── README.md           # 使用说明
-```
+转换后的HTML文件会保存在 `html` 目录中。
 
 ## 技术栈
 
 - **Node.js**：运行环境
-- **Puppeteer**：浏览器自动化和网页抓取
-- **Commander.js**：命令行界面
-- **Markdown**：内容格式转换
-
-## 注意事项
-
-1. 首次使用需要扫码登录QQ空间
-2. 登录成功后，请勿关闭浏览器窗口，程序会自动完成抓取
-3. 抓取速度取决于网络状况和QQ空间的响应速度
-4. 大量抓取可能会触发QQ空间的反爬机制，建议适当控制抓取频率
-5. 本工具仅供个人使用，请勿用于商业用途
+- **Markdown-it**：Markdown解析和转换
+- **Axios**：HTTP请求
+- **Stable Diffusion**：本地图像生成
+- **豆包API**：远程图像生成
 
 ## 许可证
 
 MIT License
 
-## 更新日志
-
-### v1.0.0 (2025-12-30)
-- 初始版本发布
-- 实现扫码登录功能
-- 支持说说内容抓取
-- 支持Markdown格式转换
-- 提供命令行界面
-
-## 贡献
-
-欢迎提交Issue和Pull Request！
-
-## 问题反馈
-
-如果在使用过程中遇到问题，请通过以下方式反馈：
-
-- 提交GitHub Issue
-- 发送邮件到：[your-email@example.com]
-
 ## 免责声明
 
-本工具仅用于学习和个人使用，请勿用于任何违法或侵犯他人权益的行为。使用本工具产生的一切后果由使用者自行承担。
+本项目仅供学习和个人使用，请勿用于任何违法或侵犯他人权益的行为。使用本项目产生的一切后果由使用者自行承担。
