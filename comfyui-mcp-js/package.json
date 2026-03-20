@@ -1,0 +1,25 @@
+{
+  "name": "comfyui-mcp-js",
+  "version": "1.0.0",
+  "description": "ComfyUI Model Control Panel in JavaScript",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "comfyui",
+    "model",
+    "control",
+    "panel",
+    "ai"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2",
+    "axios": "^1.6.2",
+    "uuid": "^9.0.1"
+  }
+}
